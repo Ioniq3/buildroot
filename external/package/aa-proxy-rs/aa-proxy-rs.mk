@@ -1,4 +1,8 @@
+ifeq ($(findstring milkv-duos,$(CONFIG_DIR)),milkv-duos)
+AA_PROXY_RS_VERSION = musl-riscv
+else
 AA_PROXY_RS_VERSION = main
+endif
 AA_PROXY_RS_SITE = https://github.com/aa-proxy/aa-proxy-rs.git
 AA_PROXY_RS_SITE_METHOD = git
 
@@ -18,6 +22,12 @@ endef
 AA_PROXY_RS_CARGO_ENV = \
     AA_PROXY_COMMIT="$(AA_PROXY_RS_COMMIT)" \
     BUILDROOT_COMMIT="$(BUILDROOT_COMMIT)"
+
+# use own toolchain only for RISC-V builds (milkv-duos)
+ifeq ($(findstring milkv-duos,$(CONFIG_DIR)),milkv-duos)
+# Add our own toolchain to path
+AA_PROXY_RS_CARGO_ENV += PATH=/app/buildroot/output/milkv-duos/build/riscv/bin:$(BR_PATH)
+endif
 
 # default config file generator
 define AA_PROXY_RS_GENERATE_CONFIG

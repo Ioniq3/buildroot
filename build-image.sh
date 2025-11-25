@@ -18,9 +18,40 @@ else
     external/scripts/defconfig_merger.sh ${ARG}
 
     BUILDROOT_DIR=/app/buildroot
+    PATCH_DIR=/app/br-patches
+    STAMP="$BUILDROOT_DIR/.stamp_patched"
     OUTPUT=${BUILDROOT_DIR}/output/${ARG}
     mkdir -p ${OUTPUT}
+
+    # We need to download the host-tools for MilkV.
+    # FIXME: consider using the upstream repository (https://github.com/sophgo/host-tools).
+    # Downloading them into the target output and setting BR2_TOOLCHAIN_EXTERNAL_PATH
+    # doesn't help, because Buildroot still resolves the path as /app/host-tools.
+    # So the tools must be placed directly in the root /app directory.
+    if [ "$ARG" = "milkv-duos" ]; then
+        if [ ! -d /app/host-tools ]; then
+            sudo git clone --depth=1 https://github.com/milkv-duo/host-tools.git /app/host-tools
+        else
+            echo "Host tools already exists"
+        fi
+    fi
+
     cd ${BUILDROOT_DIR}
+
+    # Apply buildroot patches in order
+    # Exit if already patched
+    if [ -f "$STAMP" ]; then
+        echo "Patch series already applied, skipping."
+    else
+        for p in $(ls "$PATCH_DIR"/*.patch | sort); do
+            echo "Applying patch $p..."
+            sudo patch -p1 < "$p"
+        done
+        # Create stamp file to mark patches applied
+        sudo touch "$STAMP"
+        echo "All patches applied successfully."
+    fi
+
     make BR2_EXTERNAL=../external/ O=${OUTPUT} gen_${ARG}_defconfig
     cd ${OUTPUT}
     make -j$(nproc --all)

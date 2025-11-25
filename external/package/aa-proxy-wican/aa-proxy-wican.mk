@@ -17,4 +17,10 @@ AA_PROXY_WICAN_CARGO_ENV = \
     AA_PROXY_WICAN_COMMIT="$(AA_PROXY_WICAN_COMMIT)" \
     BUILDROOT_COMMIT="$(BUILDROOT_COMMIT)"
 
+# use own toolchain only for RISC-V builds (milkv-duos)
+ifeq ($(findstring milkv-duos,$(CONFIG_DIR)),milkv-duos)
+# Add our own toolchain to path
+AA_PROXY_WICAN_CARGO_ENV += PATH=/app/buildroot/output/milkv-duos/build/riscv/bin:$(BR_PATH)
+endif
+
 $(eval $(cargo-package))
